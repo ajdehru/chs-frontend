@@ -9,6 +9,9 @@ import * as yup from "yup";
 import { toastMessage } from "../../config/toast";
 import { callPostApi } from "../../_service";
 import useGetMountData from "../../helpers/getDataHook";
+import { getLocalStorage } from "../../helpers/storage";
+import { STORAGE } from "../../constants";
+import { Key } from "react-feather";
 
 
 function formatDate(dateString) {
@@ -23,6 +26,7 @@ function formatDate(dateString) {
   return date.toLocaleDateString("en-GB", options);
 }
 
+
 // Validation schema with Yup
 const validationSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -35,10 +39,14 @@ const validationSchema = yup.object().shape({
     }),
 });
 
-const Dashboard = ({ data, appointmentData , userProfileId,  }) => {
+const Dashboard = ({ data, appointmentData   }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("appointments");
   const [showModal, setShowModal] = useState(false); // Modal visibility state
+
+  const userProfileId = getLocalStorage(STORAGE.USER_KEY)?.profile?._id;
+
+
   
   const handleModelShow=()=>setShowModal(true);
   const handleModelClose=()=>setShowModal(false);
@@ -56,13 +64,12 @@ const Dashboard = ({ data, appointmentData , userProfileId,  }) => {
   } = useForm({
     resolver: yupResolver(validationSchema),
   });
+
   const {
-    data: isReports,
-    loading,
-    getAllData,
-  } = useGetMountData(
-    `/doctor/appointment/${userProfileId}?status=Pending&time=today`
-  );
+      data: Reports,
+    } = useGetMountData(
+      `/patient/medical/${userProfileId}`
+    );
 
  
 
@@ -89,10 +96,6 @@ const Dashboard = ({ data, appointmentData , userProfileId,  }) => {
 
       // Step 4: Notify success and refresh data
       toastMessage("success", "Report is added successfully.");
-      getAllData(`/patient/reports/${userProfileId}`);
-
-       // Refresh the list or data
-console.log("getData",data);
 
       setShowModal(false)
     } catch (error) {
@@ -276,52 +279,50 @@ console.log("getData",data);
                     role="tabpanel"
                   >
                     <div className="custom-table">
-                      <div className="table-responsive">
-                        <table className="table table-center mb-0">
-                          <thead>
-                            <tr>
-                              <th>ID</th>
-                              <th>Name</th>
-                              <th>Date</th>
-                              <th>Description</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td className="text-blue-600">
-                                <a href="javascript:void(0);">#MR-123</a>
-                              </td>
-                              <td>
-                                <a
-                                  href="javascript:void(0);"
-                                  className="lab-icon"
-                                >
-                                  <span>
-                                    <i className="fa-solid fa-paperclip"></i>
-                                  </span>
-                                  Lab Report
-                                </a>
-                              </td>
-                              <td>24 Mar 2024</td>
-                              <td>Glucose Test V12</td>
-                              <td>
-                                <div className="action-item">
-                                  <a href="javascript:void(0);">
-                                    <i className="fa-solid fa-pen-to-square"></i>
-                                  </a>
-                                  <a href="javascript:void(0);">
-                                    <i className="fa-solid fa-download"></i>
-                                  </a>
-                                  <a href="javascript:void(0);">
-                                    <i className="fa-solid fa-trash-can"></i>
-                                  </a>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
+                    <div className="overflow-x-auto">
+  <table className="min-w-full table-auto border-collapse border border-gray-200">
+    {/* Table Header */}
+    <thead className="bg-gray-100">
+      <tr>
+        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border border-gray-200">
+          Name
+        </th>
+        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border border-gray-200">
+          Description
+        </th>
+        <th className="px-4 py-2 text-left text-sm font-medium text-gray-600 border border-gray-200">
+          Attachment
+        </th>
+      </tr>
+    </thead>
+
+    {/* Table Body */}
+    <tbody>
+      {Reports.map((item, index) => (
+        <tr
+          key={index}
+          className={` hover:bg-gray-100`}
+        >
+          <td className="px-4 py-2 text-sm text-gray-800 border border-gray-200">
+            {item.name}
+          </td>
+          <td className="px-4 py-2 text-sm text-gray-800 border border-gray-200">
+            {item.description}
+          </td>
+          <td className="px-4 py-2 text-sm text-blue-600 border border-gray-200">
+            {item.attachment ? (
+              <a href={item.attachment} className="hover:underline">
+                View Attachment
+              </a>
+            ) : (
+              "No attachment"
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
                     </div>
                   </div>
                 )}
@@ -456,6 +457,8 @@ console.log("getData",data);
           </Button>
         </Modal.Footer>
       </Form>
+     
+     
     </Modal>
    </>
   );
