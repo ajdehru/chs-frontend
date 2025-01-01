@@ -108,7 +108,7 @@ const ProfileSetting = ({ data }) => {
                     type="file"
                     className="upload"
                     accept="image/*"
-                    // onChange={handlePhotoChange}
+                    onChange={handlePhotoChange}
                   />
                 </div>
                 <a href="#" className="upload-remove">
