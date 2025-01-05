@@ -1,7 +1,29 @@
-import React from "react";
+import React, { useState } from "react";
 import user_img from "../../assets/img/doctor-profile-img.jpg";
+import { Button, Modal } from "react-bootstrap";
 
 const Appointments = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [analyze, setAnalyze] = useState(false);
+
+  const [selectedPatient, setSelectedPatient] = useState(null);
+
+  const analyzeShow =()=>setAnalyze(true)
+  const analyzehide =()=>setAnalyze(false)
+
+
+  const handleIconClick = (patientId) => {
+    setSelectedPatient(patientId); // Set patient information (e.g., ID)
+    setShowModal(true); // Show the modal
+   
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false); // Hide the modal
+    setSelectedPatient(null); // Clear patient information
+    setAnalyze(false)
+  };
+
   return (
     <div>
       <div class="dashboard-header">
@@ -107,10 +129,12 @@ const Appointments = () => {
                     </a>
                   </li>
                   <li>
-                    <a href="#">
-                      <i class="fa-solid fa-comments"></i>
+                  <a href="#" >
+                      <i className="fa-solid fa-comments" onClick={handleIconClick}></i>
                     </a>
+
                   </li>
+                  
                   <li>
                     <a href="#">
                       <i class="fa-solid fa-xmark"></i>
@@ -126,7 +150,76 @@ const Appointments = () => {
               </li>
             </ul>
           </div>
+          
         </div>
+        {
+        <Modal show={showModal} onHide={handleCloseModal} animation={false}>
+        <Modal.Header closeButton>
+        <Modal.Title> <div className="flex justify-between items-center border-b pb-2">
+              <h5 className="text-lg font-medium text-gray-800">
+                Patient Body Check Report
+              </h5>
+              
+            </div></Modal.Title>
+      </Modal.Header>
+      <Modal.Body><div className="mt-4">
+              <p className="text-sm text-gray-600">Patient ID: #Apt0001</p>
+              <ul className="mt-2 text-sm text-gray-700">
+                <li>Height: 172 cm</li>
+                <li>Weight: 70 kg</li>
+                <li>Blood Pressure: 120/80</li>
+                <li>Heart Rate: 75 bpm</li>
+              </ul>
+            </div>
+            
+            <div className="mt-4">
+              <p className="text-sm text-gray-600">Patient ID: #Apt0003</p>
+              <ul className="mt-2 text-sm text-gray-700">
+                <li>Height: 175 cm</li>
+                <li>Weight: 72 kg</li>
+                <li>Blood Pressure: 120/80</li>
+                <li>Heart Rate: 75 bpm</li>
+              </ul>
+            </div>
+            </Modal.Body>
+      <Modal.Footer>
+      <div className="mt-4 flex justify-end space-x-2  ">
+      <button
+                className="bg-green text-white px-4 py-2 rounded hover:bg-green-600"
+                onClick={analyzeShow}
+              >
+                Analyze
+              </button>
+              
+              <button
+                className="bg-blue  text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={() => alert("Starting Appointment...")}
+              >
+                Start Appointment
+              </button>
+              
+            </div>
+      </Modal.Footer>
+    </Modal>
+      
+      }
+      {analyze &&
+      <Modal show={analyze} onHide={analyzehide}>
+        <Modal.Header closeButton>
+          <Modal.Title>Modal heading</Modal.Title>
+        </Modal.Header>
+        <Modal.Body></Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={analyzehide}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={analyzeShow}>
+            Start Appointment
+          </Button>
+        </Modal.Footer>
+      </Modal>
+}
+      
         <div
           class="tab-pane fade"
           id="pills-cancel"
@@ -206,7 +299,9 @@ const Appointments = () => {
           </div>
         </div>
       </div>
+     
     </div>
+    
   );
 };
 
