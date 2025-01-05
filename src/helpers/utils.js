@@ -30,18 +30,24 @@ const getDateFormate = (date) => {
   return moment(date).format("DD MMM YYYY");
 };
 
-const getIdLastDigit = (date) => {
-  if (!date) {
-    return null;
-  }
-  return moment(date).format("DD MMM YYYY");
-};
-
-const getIdLastDigits = (id) => {
+const getIdLastDigits = (id, type) => {
   if (!id) {
     return null;
   }
-  return id.slice(-5);
+  let word = `#${type || ""}${id.slice(-7)}`;
+  return word;
 };
 
-export { getMdHTMLValue, getDateFormate, getIdLastDigits };
+function formatDate(dateString) {
+  const date = new Date(dateString);
+
+  const options = {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  };
+
+  return date.toLocaleDateString("en-GB", options);
+}
+
+export { getMdHTMLValue, getDateFormate, getIdLastDigits, formatDate };

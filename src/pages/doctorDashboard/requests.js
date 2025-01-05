@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import user_img from "../../assets/img/doctor-profile-img.jpg";
 import useGetMountData from "../../helpers/getDataHook";
 import { getLocalStorage } from "../../helpers/storage";
@@ -7,14 +7,15 @@ import { getDateFormate, getIdLastDigits } from "../../helpers/utils";
 import NotFound from "../../components/common/notFound";
 import { ChevronDown, ChevronUp } from "react-feather";
 import { Dropdown, Form } from "react-bootstrap";
+import { toastMessage } from "../../config/toast";
+import { callPutApi } from "../../_service";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
-
 
 const Requests = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [time, setTime] = useState("today");
 
   const userProfileId = getLocalStorage(STORAGE.USER_KEY)?.profile?._id;
 
@@ -22,93 +23,100 @@ const Requests = () => {
     data: Appointments,
     loading,
     getAllData,
+    setData,
   } = useGetMountData(
     `/doctor/appointment/${userProfileId}?status=Pending&time=today`
   );
 
-  const getByFilter = async (filter) => {
-    console.log(filter, "filterrr");
-    await getAllData(
-      `/doctor/appointment/${userProfileId}?status=Pending&time=${filter}`
-    );
+  const getByFilter = async (time, startDate, endDate) => {
+    let url = `/doctor/appointment/${userProfileId}?status=Pending&time=${time}`;
+    if (startDate && endDate) {
+      url = `/doctor/appointment/${userProfileId}?status=Pending&time=${time}&startDate=${startDate}&endDate=${endDate}`;
+    }
+    await getAllData(url);
   };
+
+  useEffect(() => {
+    if (time || (startDate && endDate)) {
+      getByFilter(time, startDate, endDate);
+    }
+  }, [startDate, endDate, time]);
+
   const handleDateChange = (dates) => {
+    console.log(dates, "ffff");
     const [start, end] = dates;
     setStartDate(start);
     setEndDate(end);
   };
 
-  const handleUpdate = async (isAvl) => {
-    // setAvailability(isAvl);
-    // try {
-    //   const verifyResponse = await callPutApi(`/doctor/${doctorDetails?._id}`, {
-    //     availability: isAvl,
-    //   });
-    //   if (!verifyResponse.status) throw new Error(verifyResponse.message);
-    //   toastMessage("success", "You availability is updated now");
-    //   const userProfile = getLocalStorage(STORAGE.USER_KEY);
-    //   let profile = userProfile.profile;
-    //   let updatedStorage = {
-    //     ...userProfile,
-    //     profile: {
-    //       ...profile,
-    //       availability: isAvl,
-    //     },
-    //   };
-    //   setLocalStorage(STORAGE.USER_KEY, updatedStorage);
-    // } catch (error) {
-    //   setAvailability(!isAvl);
-    //   toastMessage("error", "Availability update process failed!");
-    // }
+  const handleUpdate = async (id, status) => {
+    try {
+      const verifyResponse = await callPutApi(`/patient/appointment/${id}`, {
+        status,
+      });
+      if (!verifyResponse.status) throw new Error(verifyResponse.message);
+
+      toastMessage(
+        "success",
+        status === "Accepted"
+          ? "The appointment has been accepted."
+          : "The appointment has been rejected."
+      );
+
+      const updatedData = Appointments?.filter((item) => item?._id !== id);
+      setData(updatedData || []);
+    } catch (error) {
+      toastMessage("error", "Appointment update process failed!");
+    }
   };
 
+  console.log(Appointments, "Appointments");
   return (
     <div>
       <div class="dashboard-header">
         <h3>Requests</h3>
-        
-          <div className="flex justify-between mr-1 ">
-        <DatePicker
-        selected={startDate}
-        onChange={handleDateChange}
-        startDate={startDate}
-        endDate={endDate}
-        selectsRange
-        isClearable
-        className=" border rounded p-2  w-full h-full "
-        placeholderText="Select a date range"
-      />
 
-      {startDate && endDate && (
-        <p className="text-sm">
-          Selected Range: {startDate.toLocaleDateString()} -{" "}
-          {endDate.toLocaleDateString()}
-        </p>
-      )}
-               </div>
+        <div className="flex justify-between mr-1 ">
+          <DatePicker
+            selected={startDate}
+            onChange={handleDateChange}
+            startDate={startDate}
+            endDate={endDate}
+            selectsRange
+            isClearable
+            className=" border rounded p-2  w-full h-full "
+            placeholderText="Select a date range"
+          />
 
+          {/* {startDate && endDate && (
+            <p className="text-sm">
+              Selected Range: {startDate.toLocaleDateString()} -{" "}
+              {endDate.toLocaleDateString()}
+            </p>
+          )} */}
 
-        <ul>
-          <li>
-            <Form.Select
-              onChange={(e) => {
-                getByFilter(e.target.value);
-              }}
-            >
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-            </Form.Select>
-          </li>
-        </ul>
+          <ul>
+            <li>
+              <Form.Select
+                onChange={(e) => {
+                  setTime(e.target.value);
+                }}
+              >
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+              </Form.Select>
+            </li>
+          </ul>
+        </div>
       </div>
       <NotFound
         loading={loading}
         isData={Appointments?.length > 0}
-        message="No Appointments Found."
+        message="No Appointment Requests Found."
       />
       {!loading &&
-        Appointments &&
+        Appointments?.length > 0 &&
         Appointments?.map((it, index) => {
           return (
             <div class="appointment-wrap">
@@ -151,26 +159,20 @@ const Requests = () => {
                 <li>
                   <ul class="request-action">
                     <li>
-                      <a
-                        onClick={() => handleUpdate(true)}
-                        href="#"
+                      <span
+                        onClick={() => handleUpdate(it?._id, "Accepted")}
                         class="accept-link"
-                        data-bs-toggle="modal"
-                        data-bs-target="#accept_appointment"
                       >
                         <i class="fa-solid fa-check"></i>Accept
-                      </a>
+                      </span>
                     </li>
                     <li>
-                      <a
-                        onClick={() => handleUpdate(false)}
-                        href="#"
+                      <span
+                        onClick={() => handleUpdate(it?._id, "Cancelled")}
                         class="reject-link"
-                        data-bs-toggle="modal"
-                        data-bs-target="#cancel_appointment"
                       >
                         <i class="fa-solid fa-xmark"></i>Reject
-                      </a>
+                      </span>
                     </li>
                   </ul>
                 </li>

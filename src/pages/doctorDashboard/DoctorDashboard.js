@@ -53,8 +53,6 @@ function DoctorDashboard() {
                   <Tab.Pane eventKey="sixth">
                     <Profile doctorDetails={data} getAllData={getAllData} />
                   </Tab.Pane>
-
-                  
                 </Tab.Content>
               </Col>
             </Row>
